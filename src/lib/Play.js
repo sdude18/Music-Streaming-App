@@ -13,6 +13,10 @@ export async function play(
   var audio = document.getElementById("audio");
   var source = document.getElementById("audioSource");
 
+  source.src = preview;
+  audio.load();
+  audio.play();
+
   await changecolour(cover);
 
   playingsong.set({
@@ -24,18 +28,6 @@ export async function play(
     songtitles: songtitles,
     songpreview: mp3preview,
   });
-
-  console.log("play");
-
-  if (source.src != preview) {
-    source.src = preview;
-    await audio.load();
-    await audio.play();
-  } else if (audio.duration > 0 && !audio.paused) {
-    await audio.pause();
-  } else {
-    await audio.play();
-  }
 }
 
 export async function changecolour(cover) {

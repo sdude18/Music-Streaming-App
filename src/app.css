@@ -174,7 +174,7 @@ input {
 }
 
 .sidenav {
-  height: 100%;
+  height: calc(100% - 80px);
   width: 220px;
   position: fixed;
   z-index: 1;
@@ -184,6 +184,9 @@ input {
   padding: 10px;
   font-size: 1.5rem;
   background-color: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .sidenav svg {
@@ -233,6 +236,10 @@ main {
 
 .songmobile {
   gap: 8vw;
+}
+
+.sidenavimg img {
+  width: 100%;
 }
 
 footer {

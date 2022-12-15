@@ -110,6 +110,17 @@
               mp3preview,
               songartists
             )}
+          on:tapup={() =>
+            play(
+              songcovers[index],
+              songtitles[index],
+              mp3preview[index],
+              index,
+              songcovers,
+              songtitles,
+              mp3preview,
+              songartists
+            )}
         >
           <div class="container">
             <Lazy offset={10}>
