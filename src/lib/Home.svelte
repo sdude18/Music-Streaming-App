@@ -64,7 +64,11 @@
 <h1>Playlists youll love</h1>
 <div class="results term">
   {#each songtitles as songtitle, index}
-    <div class="grid-item" on:click={() => openplaylist(playlistid[index])}>
+    <div
+      class="grid-item"
+      on:click={() => openplaylist(playlistid[index])}
+      on:keypress={() => openplaylist(playlistid[index])}
+    >
       <div class="container">
         <Lazy offset={10}>
           <img

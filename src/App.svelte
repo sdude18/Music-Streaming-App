@@ -1,31 +1,116 @@
+<script context="module">
+  import { register } from "svelte-loadable";
+
+  const HomeLoader = register({
+    loader: () => import("./lib/Home.svelte"),
+    resolve: () => import("./lib/Home.svelte"),
+  });
+
+  const SearchLoader = register({
+    loader: () => import("./lib/Search.svelte"),
+    resolve: () => import("./lib/Search.svelte"),
+  });
+
+  const AccountLoader = register({
+    loader: () => import("./lib/Account.svelte"),
+    resolve: () => import("./lib/Account.svelte"),
+  });
+
+  const PlaylistLoader = register({
+    loader: () => import("./lib/PlaylistViewer.svelte"),
+    resolve: () => import("./lib/PlaylistViewer.svelte"),
+  });
+</script>
+
 <script>
   import PlaylistViewer from "./lib/PlaylistViewer.svelte";
   import Search from "./lib/Search.svelte";
   import { Router, Route, Link, navigate } from "svelte-navigator";
   import Loadable from "svelte-loadable";
   import playingsong from "./store.js";
-  import { FastAverageColor } from "fast-average-color";
-  const fac = new FastAverageColor();
   import { swipe } from "svelte-gestures";
+  import { changecolour } from "./lib/Play.js";
+  import accountstore from "./accountstore.js";
 
-  let direction;
+  async function likesong() {
+    if ($accountstore.useremail != "") {
+      const { initializeApp } = await import("firebase/app");
+      const {
+        getFirestore,
+        collection,
+        addDoc,
+        getDocs,
+        query,
+        where,
+        deleteDoc,
+      } = await import("firebase/firestore");
 
-  function swipedownviewaudio(event) {
-    direction = event.detail.direction;
-    console.log(direction);
-    if (direction == "bottom") {
-      viewaudio = false;
+      const firebaseConfig = {
+        apiKey: "AIzaSyAmDg1h5sJJ4teLVmrA-VYCSpL4QLXE-3Q",
+        authDomain: "music-369d7.firebaseapp.com",
+        projectId: "music-369d7",
+        storageBucket: "music-369d7.appspot.com",
+        messagingSenderId: "1098254840614",
+        appId: "1:1098254840614:web:e334f9a8d671cfcd54c7e7",
+      };
+
+      const firebase = initializeApp(firebaseConfig);
+      const firestore = getFirestore(firebase);
+
+      var results = [];
+      const citiesRef = collection(firestore, $accountstore.useremail);
+      const q = query(
+        citiesRef,
+        where(
+          "preview",
+          "==",
+          $playingsong.songpreview[$playingsong.songsindex]
+        )
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach((doc) => {
+        const { artist } = doc.data();
+        results.push(artist);
+      });
+
+      if (results.length < 1) {
+        const docRef = await addDoc(
+          collection(firestore, $accountstore.useremail),
+          {
+            user: $accountstore.useremail,
+            time: new Date(),
+            artwork: $playingsong.artwork,
+            title: $playingsong.title,
+            artist: $playingsong.artist[$playingsong.songsindex],
+            preview: $playingsong.songpreview[$playingsong.songsindex],
+          }
+        );
+      } else {
+        querySnapshot.forEach((doc) => {
+          deleteDoc(doc.ref);
+        });
+      }
+
+      event.cancelBubble = true;
+      if (event.stopPropagation) event.stopPropagation();
     }
+
+    event.cancelBubble = true;
+    if (event.stopPropagation) event.stopPropagation();
   }
 
   playingsong.subscribe((data) => {});
 
+  let direction;
   let innerWidth;
   let durationcompleted = 0;
   let duration = 0;
   let currentduration = 0;
   let viewaudio = false;
   let SearchContent;
+  let mouseDownOnSlider = false;
 
   $: $playingsong, sveltestorechanged();
 
@@ -33,14 +118,37 @@
     sveltestorechanged();
   }
 
+  function swipedownviewaudio(event) {
+    direction = event.detail.direction;
+    if (direction == "bottom") {
+      viewaudio = false;
+    }
+  }
+
   function sveltestorechanged() {
     var audio = document.getElementById("audio");
     if ($playingsong.title != null && $playingsong.title != "" && audio) {
-      window.myTimer = setInterval(function () {
-        duration = audio.duration;
-        currentduration = audio.currentTime;
-        durationcompleted = (audio.currentTime / audio.duration) * 100;
-      }, 1000);
+      audio.addEventListener("timeupdate", () => {
+        if (!mouseDownOnSlider || innerWidth < 500) {
+          if (isNaN(audio.duration)) {
+            duration = 0;
+          } else {
+            duration = audio.duration;
+          }
+
+          if (isNaN(audio.currentTime)) {
+            currentduration = 0;
+          } else {
+            currentduration = audio.currentTime;
+          }
+
+          if (isNaN((audio.currentTime / audio.duration) * 100)) {
+            durationcompleted = 0;
+          } else {
+            durationcompleted = (audio.currentTime / audio.duration) * 100;
+          }
+        }
+      });
     }
   }
 
@@ -60,7 +168,7 @@
     if ("mediaSession" in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: $playingsong.title,
-        artist: "",
+        artist: $playingsong.artist[$playingsong.songsindex],
         album: "",
         artwork: [
           {
@@ -96,19 +204,15 @@
     viewaudio = false;
   }
 
-  function changetime() {
+  async function changetime() {
     var audio = document.getElementById("audio");
-    window.clearInterval(myTimer);
     audio.pause();
-    console.log(durationcompleted);
-    audio.currentTime = (durationcompleted / 100) * audio.duration;
+    audio.currentTime = (await (durationcompleted / 100)) * audio.duration;
     audio.play();
-    sveltestorechanged();
   }
 
   function swipefooter() {
     direction = event.detail.direction;
-    console.log(direction);
     if (direction == "top") {
       footeropen();
     } else if (direction == "right") {
@@ -125,66 +229,25 @@
       viewaudio == false
     ) {
       viewaudio = true;
-      var color;
-      fac.getColorAsync($playingsong.artwork).then((color) => {
-        color = color;
-        var R = parseInt(color.hex.substring(1, 3), 16);
-        var G = parseInt(color.hex.substring(3, 5), 16);
-        var B = parseInt(color.hex.substring(5, 7), 16);
-        R = parseInt((R * (100 + -60)) / 100);
-        G = parseInt((G * (100 + -60)) / 100);
-        B = parseInt((B * (100 + -60)) / 100);
-        R = R < 255 ? R : 255;
-        G = G < 255 ? G : 255;
-        B = B < 255 ? B : 255;
-        var RR =
-          R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-        var GG =
-          G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-        var BB =
-          B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-        var colordarken = "#" + RR + GG + BB;
-        document.getElementById("viewaudio").style.background = colordarken;
-      });
+      changecolour($playingsong.artwork);
     } else {
       viewaudio = false;
     }
   }
 
   async function search() {
-    navigate("/search/" + SearchContent);
+    navigate("/search/" + SearchContent, { replace: true });
   }
 
   function play(cover, title, preview, index) {
     var audio = document.getElementById("audio");
     var source = document.getElementById("audioSource");
-    var color;
-    fac.getColorAsync(cover).then((color) => {
-      color = color;
-      var R = parseInt(color.hex.substring(1, 3), 16);
-      var G = parseInt(color.hex.substring(3, 5), 16);
-      var B = parseInt(color.hex.substring(5, 7), 16);
-      R = parseInt((R * (100 + -60)) / 100);
-      G = parseInt((G * (100 + -60)) / 100);
-      B = parseInt((B * (100 + -60)) / 100);
-      R = R < 255 ? R : 255;
-      G = G < 255 ? G : 255;
-      B = B < 255 ? B : 255;
-      var RR =
-        R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-      var GG =
-        G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-      var BB =
-        B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-      var colordarken = "#" + RR + GG + BB;
-      document.querySelector("footer").style.background = colordarken;
-    });
+    changecolour(cover);
 
     playingsong.set({
       title: title,
       artwork: cover,
-      artist: "",
-      color: color,
+      artist: $playingsong.artist,
       songsindex: index,
       songsartwork: $playingsong.songsartwork,
       songtitles: $playingsong.songtitles,
@@ -209,28 +272,10 @@
     var cover = $playingsong.songsartwork[index];
     var title = $playingsong.songtitles[index];
     var preview = $playingsong.songpreview[index];
+    var artist = $playingsong.artist[index];
     play(cover, title, preview, index);
     if (viewaudio == true) {
-      fac.getColorAsync($playingsong.artwork).then((color) => {
-        color = color;
-        var R = parseInt(color.hex.substring(1, 3), 16);
-        var G = parseInt(color.hex.substring(3, 5), 16);
-        var B = parseInt(color.hex.substring(5, 7), 16);
-        R = parseInt((R * (100 + -60)) / 100);
-        G = parseInt((G * (100 + -60)) / 100);
-        B = parseInt((B * (100 + -60)) / 100);
-        R = R < 255 ? R : 255;
-        G = G < 255 ? G : 255;
-        B = B < 255 ? B : 255;
-        var RR =
-          R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-        var GG =
-          G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-        var BB =
-          B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-        var colordarken = "#" + RR + GG + BB;
-        document.getElementById("viewaudio").style.background = colordarken;
-      });
+      changecolour($playingsong.artwork);
     }
   }
 
@@ -244,28 +289,14 @@
       var preview = $playingsong.songpreview[index];
       play(cover, title, preview, index);
       if (viewaudio == true) {
-        fac.getColorAsync($playingsong.artwork).then((color) => {
-          color = color;
-          var R = parseInt(color.hex.substring(1, 3), 16);
-          var G = parseInt(color.hex.substring(3, 5), 16);
-          var B = parseInt(color.hex.substring(5, 7), 16);
-          R = parseInt((R * (100 + -60)) / 100);
-          G = parseInt((G * (100 + -60)) / 100);
-          B = parseInt((B * (100 + -60)) / 100);
-          R = R < 255 ? R : 255;
-          G = G < 255 ? G : 255;
-          B = B < 255 ? B : 255;
-          var RR =
-            R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-          var GG =
-            G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-          var BB =
-            B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-          var colordarken = "#" + RR + GG + BB;
-          document.getElementById("viewaudio").style.background = colordarken;
-        });
+        changecolour($playingsong.artwork);
       }
     }
+  }
+
+  function share() {
+    window.open($playingsong.songpreview[$playingsong.songsindex]);
+    pauseaudio();
   }
 </script>
 
@@ -291,17 +322,27 @@
     <div class="controlsmobile">
       <p>{currentduration.toFixed(0)}</p>
       <input
-        on:mouseup={changetime}
+        on:drag={changetime}
+        on:click={changetime}
         on:change={changetime}
+        on:mouseup={() => (mouseDownOnSlider = false)}
         type="range"
         min="0"
         max="100"
         bind:value={durationcompleted}
         class="slider"
+        step="1"
       />
       <p>{duration.toFixed(0)}</p>
     </div>
     <div class="songmobile">
+      <button on:click={likesong}
+        ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+          ><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path
+            d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"
+          /></svg
+        ></button
+      >
       <button on:click={backward}
         ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
           ><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path
@@ -323,6 +364,13 @@
           /></svg
         ></button
       >
+      <button on:click={share}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+          ><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path
+            d="M307 34.8c-11.5 5.1-19 16.6-19 29.2v64H176C78.8 128 0 206.8 0 304C0 417.3 81.5 467.9 100.2 478.1c2.5 1.4 5.3 1.9 8.1 1.9c10.9 0 19.7-8.9 19.7-19.7c0-7.5-4.3-14.4-9.8-19.5C108.8 431.9 96 414.4 96 384c0-53 43-96 96-96h96v64c0 12.6 7.4 24.1 19 29.2s25 3 34.4-5.4l160-144c6.7-6.1 10.6-14.7 10.6-23.8s-3.8-17.7-10.6-23.8l-160-144c-9.4-8.5-22.9-10.6-34.4-5.4z"
+          /></svg
+        >
+      </button>
     </div>
   </div>
 {/if}
@@ -346,6 +394,13 @@
             d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"
           /></svg
         >Search</Link
+      >
+      <Link to="/account"
+        ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"
+          ><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path
+            d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"
+          /></svg
+        >Account</Link
       >
     </div>
   </nav>
@@ -385,27 +440,55 @@
       <div class="controls">
         <p>{currentduration.toFixed(0)}</p>
         <input
-          on:mouseup={changetime}
+          on:drag={changetime}
+          on:click={changetime}
           on:change={changetime}
+          on:mouseup={() => (mouseDownOnSlider = false)}
           type="range"
           min="0"
           max="100"
           bind:value={durationcompleted}
           class="slider"
+          step="1"
         />
         <p>{duration.toFixed(0)}</p>
       </div>
-      <div class="duration"><h1>{$playingsong.title}</h1></div>
+      <div class="duration">
+        {#if $accountstore.useremail != ""}
+          <button on:click={likesong} on:keypress={likesong}
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+              ><!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path
+                d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"
+              /></svg
+            ></button
+          >
+        {/if}
+        {#if $playingsong.title != ""}
+          <div class="text">
+            <h2>{$playingsong.title}</h2>
+            <h4>By : {$playingsong.artist[$playingsong.songsindex]}</h4>
+          </div>
+        {/if}
+      </div>
     </footer>
   {/if}
   <!--Main-->
   <main class:displaynone={viewaudio == true}>
     <Route path="/" primary={false}>
-      <Loadable loader={() => import("./lib/Home.svelte")} />
+      <Loadable loader={HomeLoader}>
+        <div slot="loading">Loading...</div>
+      </Loadable>
+    </Route>
+    <Route path="account" primary={false}>
+      <Loadable loader={AccountLoader}>
+        <div slot="loading">Loading...</div>
+      </Loadable>
     </Route>
     <Route path="playlist/*" primary={false}>
       <Route path="/">
-        <Loadable loader={() => import("./lib/Home.svelte")} />
+        <Loadable loader={HomeLoader}>
+          <div slot="loading">Loading...</div>
+        </Loadable>
       </Route>
       <Route path=":id" component={PlaylistViewer} />
     </Route>
@@ -425,7 +508,9 @@
         </form>
       </div>
       <Route path="/">
-        <Loadable loader={() => import("./lib/Search.svelte")} />
+        <Loadable loader={SearchLoader}>
+          <div slot="loading">Loading...</div>
+        </Loadable>
       </Route>
       <Route path=":id" component={Search} />
     </Route>
@@ -434,7 +519,7 @@
 
 <svelte:window bind:innerWidth />
 
-<audio id="audio">
+<audio id="audio" autoPlay>
   <source id="audioSource" src="" />
   Your browser does not support the audio format.
 </audio>

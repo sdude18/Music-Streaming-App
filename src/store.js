@@ -2,9 +2,8 @@ import { writable } from "svelte/store";
 
 const playingsong = writable({
   title: "",
-  artwork: "",
-  artist: "",
-  color: "",
+  artwork: [],
+  artist: [],
   songsartwork: [],
   songtitles: [],
   songpreview: [],

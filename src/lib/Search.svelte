@@ -1,15 +1,12 @@
 <script>
-  import { FastAverageColor } from "fast-average-color";
   import { useLocation } from "svelte-navigator";
   import Lazy from "svelte-lazy";
-  import playingsong from "../store.js";
+
+  import { play } from "./Play.js";
 
   export let id;
 
-  const fac = new FastAverageColor();
   const location = useLocation();
-  var audio = document.getElementById("audio");
-  var source = document.getElementById("audioSource");
 
   $: $location, getdata();
 
@@ -43,6 +40,7 @@
 
           if (title_short.length > 10)
             title_short = title_short.substring(0, 10) + "...";
+          if (name.length > 10) name = name.substring(0, 10) + "...";
 
           mp3preview.push(preview);
           songtitles.push(title_short);
@@ -51,51 +49,6 @@
         }
       })
       .catch((err) => console.error(err));
-  }
-
-  function play(cover, title, preview, index) {
-    var color;
-    fac.getColorAsync(cover).then((color) => {
-      color = color;
-      var R = parseInt(color.hex.substring(1, 3), 16);
-      var G = parseInt(color.hex.substring(3, 5), 16);
-      var B = parseInt(color.hex.substring(5, 7), 16);
-      R = parseInt((R * (100 + -60)) / 100);
-      G = parseInt((G * (100 + -60)) / 100);
-      B = parseInt((B * (100 + -60)) / 100);
-      R = R < 255 ? R : 255;
-      G = G < 255 ? G : 255;
-      B = B < 255 ? B : 255;
-      var RR =
-        R.toString(16).length == 1 ? "0" + R.toString(16) : R.toString(16);
-      var GG =
-        G.toString(16).length == 1 ? "0" + G.toString(16) : G.toString(16);
-      var BB =
-        B.toString(16).length == 1 ? "0" + B.toString(16) : B.toString(16);
-      var colordarken = "#" + RR + GG + BB;
-      document.querySelector("footer").style.background = colordarken;
-    });
-
-    playingsong.set({
-      title: title,
-      artwork: cover,
-      artist: "",
-      color: color,
-      songsindex: index,
-      songsartwork: songcovers,
-      songtitles: songtitles,
-      songpreview: mp3preview,
-    });
-
-    if (source.src != preview) {
-      source.src = preview;
-      audio.load();
-      audio.play();
-    } else if (audio.duration > 0 && !audio.paused) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
   }
 </script>
 
@@ -119,7 +72,22 @@
               songcovers[index],
               songtitles[index],
               mp3preview[index],
-              index
+              index,
+              songcovers,
+              songtitles,
+              mp3preview,
+              songartists
+            )}
+          on:keypress={() =>
+            play(
+              songcovers[index],
+              songtitles[index],
+              mp3preview[index],
+              index,
+              songcovers,
+              songtitles,
+              mp3preview,
+              songartists
             )}
         >
           <div class="container">

@@ -5,33 +5,60 @@
   margin: 0;
   padding: 0;
   font-family: "Roboto", sans-serif;
-  color: white;
-  fill: white;
   text-decoration: none;
-  transition: background 500ms ease-in-out, color 1000ms ease-in-out;
+  transition: background 500ms ease-in-out;
+}
+
+.theme {
+  --color: white;
+  --bg: #18191a;
+  --bg2: #242526;
+  --thumbcolour: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .theme {
+    --color: white;
+    --bg: #18191a;
+    --bg2: #242526;
+    --thumbcolour: white;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .theme {
+    --color: black;
+    --bg: white;
+    --bg2: #f0f2f5;
+    --thumbcolour: white;
+  }
 }
 
 body {
-  background-color: #18191a;
+  background-color: var(--bg);
   overflow-x: hidden;
+  color: var(--color);
+  fill: var(--color);
 }
 
 .results {
   margin-top: 10px;
   min-height: 1vw;
+  display: flex;
+  flex-direction: column;
 }
 
 .container svg {
   height: 30px;
+  fill: var(--color);
 }
 
 .grid-item {
   max-width: 70vw;
   margin: auto;
   cursor: pointer;
-  min-height: 1vw;
   padding: 10px;
-  background-color: #242526;
+  background-color: var(--bg2);
   border-radius: 5px;
 }
 
@@ -50,7 +77,7 @@ body {
   border-radius: 50%;
   padding: 0.5rem;
   border: none;
-  background-color: #242526;
+  background-color: var(--bg2);
 }
 
 .container {
@@ -64,6 +91,12 @@ body {
 
 .container img {
   filter: brightness(0.8);
+}
+
+.duration {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .bottom-left {
@@ -100,7 +133,12 @@ form {
   z-index: 1;
   top: 0;
   left: 0;
-  background-color: #18191a;
+  background-color: var(--bg);
+  color: var(--color);
+}
+
+input {
+  color: var(--color);
 }
 
 .header svg {
@@ -116,7 +154,7 @@ form {
   height: 50px;
   font-size: 1rem;
   border: transparent;
-  background-color: #18191a;
+  background-color: var(--bg);
 }
 
 .header input:focus {
@@ -145,12 +183,13 @@ form {
   overflow-x: hidden;
   padding: 10px;
   font-size: 1.5rem;
-  background-color: #18191a;
+  background-color: var(--bg);
 }
 
 .sidenav svg {
   height: 20px;
   margin-right: 0.5rem;
+  fill: var(--color);
 }
 
 .sidenav .links {
@@ -179,6 +218,7 @@ main {
 
 .controls input[type="range"] {
   width: 40vw;
+  background: var(--color);
 }
 
 .controls,
@@ -192,7 +232,7 @@ main {
 }
 
 .songmobile {
-  gap: 10vw;
+  gap: 8vw;
 }
 
 footer {
@@ -201,12 +241,20 @@ footer {
   height: 80px;
   bottom: 0;
   width: 100%;
-  background-color: #18191a;
+  background-color: var(--bg);
   z-index: 5;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px;
+  color: var(--color);
+  fill: var(--color);
+  text-decoration: none;
+}
+
+.links a {
+  text-decoration: none;
+  color: var(--color);
 }
 
 footer svg {
@@ -216,6 +264,7 @@ footer svg {
 button {
   background-color: transparent;
   border: none;
+  color: var(--color);
 }
 
 .slider {
@@ -230,7 +279,7 @@ button {
   height: 20px;
   border: 0;
   border-radius: 50%;
-  background: white;
+  background: var(--thumbcolour);
   cursor: pointer;
 }
 
@@ -239,7 +288,7 @@ button {
   height: 20px;
   border: 0;
   border-radius: 50%;
-  background: white;
+  background: var(--thumbcolour);
   cursor: pointer;
 }
 
@@ -250,7 +299,7 @@ button {
   align-items: center;
   width: 100%;
   height: 100%;
-  background-color: #18191a;
+  background-color: var(--bg);
   position: absolute;
   top: 0;
   left: 0;
@@ -335,7 +384,7 @@ button {
     height: 60px;
     bottom: 60px;
     width: calc(100% - 10px);
-    background-color: #18191a;
+    background-color: var(--bg);
     z-index: 5;
     display: flex;
     justify-content: space-between;
@@ -345,8 +394,9 @@ button {
   }
 
   .links a {
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    font-size: 1rem;
   }
 
   .sidenav .links {
@@ -424,7 +474,7 @@ button {
     margin: 0;
     padding-left: 10px;
     padding-right: 10px;
-    background-color: #242526;
+    background-color: var(--bg2);
     border-radius: 10px;
   }
 
@@ -456,8 +506,8 @@ button {
     flex-direction: column;
     font-size: 0.7rem;
     text-align: center;
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .sidenav svg {
@@ -465,15 +515,16 @@ button {
   }
 
   .song button:nth-child(1),
-  .song button:nth-child(3) {
+  .song button:nth-child(3),
+  .duration button {
     display: none;
   }
 }
 
 @media only screen and (max-width: 295px) {
   .links a {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   * {
     font-size: 1.15rem;
