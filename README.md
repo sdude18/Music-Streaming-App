@@ -1,6 +1,9 @@
 <h3 align="center">A music streaming app made with svelte, firebase, nodejs and vite.</h3>
 
-<a> Visit App here https://musicmv.netlify.app/</a>
+<h3>Visit app <a href="https://musicmv.netlify.app/">here</a></h3>
 
-<h3 align="left">Languages and Tools:</h3>
-<p align="left"> <a href="https://www.w3schools.com/css/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original-wordmark.svg" alt="css3" width="40" height="40"/> </a> <a href="https://firebase.google.com/" target="_blank" rel="noreferrer"> <img src="https://www.vectorlogo.zone/logos/firebase/firebase-icon.svg" alt="firebase" width="40" height="40"/> </a> <a href="https://www.w3.org/html/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original-wordmark.svg" alt="html5" width="40" height="40"/> </a> <a href="https://nodejs.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/nodejs/nodejs-original-wordmark.svg" alt="nodejs" width="40" height="40"/> </a> <a href="https://svelte.dev" target="_blank" rel="noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Svelte_Logo.svg" alt="svelte" width="40" height="40"/> </a> </p>
+<h3>Home Page</h3>
+<img src="https://raw.githubusercontent.com/mukulve/Music-Streaming-App/main/public/Home.png">
+
+<h3>Search Page</h3>
+<img src="https://raw.githubusercontent.com/mukulve/Music-Streaming-App/main/public/Search.png">
