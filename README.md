@@ -1,4 +1,4 @@
-<h3 align="center">A music streaming app made with svelte, firebase, nodejs and vite.</h3>
+<h3 align="center">A Music Streaming App Made With Svelte</h3>
 
 <h3>Visit app <a href="https://musicmv.netlify.app/">here</a></h3>
 
